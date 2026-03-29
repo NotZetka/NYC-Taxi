@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.env
+.venv/
+
+# DuckDB artifacts
+*.duckdb
+*.duckdb.wal
+
+# Data downloads
+/data/raw/
+/data/reference/
+/data/cache/
+!data/.gitkeep
+
+# OS / tooling
+.DS_Store
+Thumbs.db
