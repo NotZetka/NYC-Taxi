@@ -12,6 +12,7 @@ __pycache__/
 /data/raw/
 /data/reference/
 /data/cache/
+/data/spark/
 !data/.gitkeep
 
 # OS / tooling
