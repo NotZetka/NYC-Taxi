@@ -63,14 +63,24 @@ def get_args():
     return parser.parse_args()
 
 
-def main():
-    args = get_args()
-    if args.refresh and DB_FILE.exists():
+def build_duckdb_pipeline(dataset="yellow", months=None, refresh=False):
+    if months is None:
+        months = DEFAULT_MONTHS
+    if refresh and DB_FILE.exists():
         print("refresh flag on -> deleting old duckdb file")
         DB_FILE.unlink()
     grab_lookup()
-    pull_trip_files(args.dataset, args.months)
+    pull_trip_files(dataset, months)
     run_sql()
+
+
+def main():
+    args = get_args()
+    build_duckdb_pipeline(
+        dataset=args.dataset,
+        months=args.months,
+        refresh=args.refresh,
+    )
 
 
 if __name__ == "__main__":

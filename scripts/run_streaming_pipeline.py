@@ -13,26 +13,24 @@ os.environ.setdefault("DO_NOT_TRACK", "1")
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from orchestration.prefect_flow import nyc_taxi_medallion_flow
-from scripts.run_pipeline import DEFAULT_MONTHS
+from orchestration.prefect_streaming_flow import nyc_taxi_streaming_flow
+from streaming.config import DEFAULT_STREAM_MONTHS
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the Prefect-orchestrated NYC Taxi flow")
+    parser = argparse.ArgumentParser(description="Run the streaming source-to-bronze flow")
     parser.add_argument("--dataset", default="yellow")
-    parser.add_argument("--months", nargs="+", default=DEFAULT_MONTHS)
-    parser.add_argument("--refresh-download", action="store_true")
-    parser.add_argument("--skip-spark", action="store_true")
+    parser.add_argument("--months", nargs="+", default=DEFAULT_STREAM_MONTHS)
+    parser.add_argument("--chunk-size", type=int, default=5000)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    nyc_taxi_medallion_flow(
+    nyc_taxi_streaming_flow(
         dataset=args.dataset,
         months=args.months,
-        refresh_duckdb=args.refresh_download,
-        run_spark=not args.skip_spark,
+        chunk_size=args.chunk_size,
     )
 
 

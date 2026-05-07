@@ -1,0 +1,25 @@
+name: nyc-taxi-medallion
+prefect-version: 3
+
+build: []
+push: []
+
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: C:\Repos\NYC-Taxi
+
+deployments:
+  - name: nyc-taxi-local
+    version: "1"
+    entrypoint: orchestration/prefect_flow.py:nyc_taxi_medallion_flow
+    work_pool:
+      name: default-agent-pool
+  - name: nyc-taxi-streaming
+    version: "1"
+    entrypoint: orchestration/prefect_streaming_flow.py:nyc_taxi_streaming_flow
+    work_pool:
+      name: default-agent-pool
+    schedules:
+      - cron: "0 */6 * * *"
+        timezone: Europe/Warsaw
+        active: false

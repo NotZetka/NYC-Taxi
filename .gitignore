@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 .venv/
+.prefect/
 
 # DuckDB artifacts
 *.duckdb
@@ -13,6 +14,7 @@ __pycache__/
 /data/reference/
 /data/cache/
 /data/spark/
+/data/streaming/
 !data/.gitkeep
 
 # OS / tooling
