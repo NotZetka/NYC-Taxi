@@ -1,0 +1,150 @@
+product:
+  name: "NYC Yellow Taxi Trips Bronze Data Product"
+  owner: "Kuba"
+  purpose: "Provide raw NYC Yellow Taxi trip records from the TLC source as a reusable bronze data product for exploration, profiling, visualization, and downstream medallion transformations."
+  version: "1.0.0"
+  domain: "Urban mobility / taxi trips"
+  status: "Ready for class submission"
+
+sources:
+  - name: "NYC Taxi & Limousine Commission Trip Record Data"
+    type: "Parquet files"
+    url: "https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"
+    ingestion_method: "Prefect-triggered producer downloads the monthly Parquet file, reads it with DuckDB, and publishes micro-batches to Redpanda/Kafka."
+  - name: "Local Redpanda queue"
+    type: "Kafka-compatible topic"
+    topic: "nyc_taxi_bronze_ingest"
+    role: "Transient queue between source reader and bronze writer."
+
+dataset:
+  dataset_name: "yellow_tripdata_2025_08_bronze"
+  location: "data/streaming/bronze/yellow/2025-08/*.jsonl"
+  format: "JSON Lines"
+  grain: "One row per yellow taxi trip record"
+  current_partition: "2025-08"
+  current_row_count: 3574091
+  refresh_frequency: "Manual run for homework submission; designed to run after each orchestrated monthly ingestion."
+  access_method: "Clone the repository, run the streaming pipeline, then read JSONL files from data/streaming/bronze/yellow/2025-08/."
+
+schema:
+  - name: "VendorID"
+    type: "integer"
+    description: "TLC vendor/provider identifier."
+  - name: "tpep_pickup_datetime"
+    type: "timestamp"
+    description: "Pickup date and time."
+  - name: "tpep_dropoff_datetime"
+    type: "timestamp"
+    description: "Dropoff date and time."
+  - name: "passenger_count"
+    type: "integer"
+    description: "Number of passengers reported by the driver."
+  - name: "trip_distance"
+    type: "double"
+    description: "Trip distance in miles."
+  - name: "RatecodeID"
+    type: "integer"
+    description: "Final rate code in effect at the end of the trip."
+  - name: "store_and_fwd_flag"
+    type: "string"
+    description: "Whether the trip record was held in vehicle memory before being sent to the vendor."
+  - name: "PULocationID"
+    type: "integer"
+    description: "Pickup taxi zone ID."
+  - name: "DOLocationID"
+    type: "integer"
+    description: "Dropoff taxi zone ID."
+  - name: "payment_type"
+    type: "integer"
+    description: "Payment method code."
+  - name: "fare_amount"
+    type: "double"
+    description: "Fare amount calculated by the meter."
+  - name: "extra"
+    type: "double"
+    description: "Extra charges."
+  - name: "mta_tax"
+    type: "double"
+    description: "MTA tax amount."
+  - name: "tip_amount"
+    type: "double"
+    description: "Tip amount."
+  - name: "tolls_amount"
+    type: "double"
+    description: "Tolls paid during the trip."
+  - name: "improvement_surcharge"
+    type: "double"
+    description: "Improvement surcharge."
+  - name: "total_amount"
+    type: "double"
+    description: "Total amount charged to passengers, excluding cash tips."
+  - name: "congestion_surcharge"
+    type: "double"
+    description: "Congestion surcharge amount."
+  - name: "Airport_fee"
+    type: "double"
+    description: "Airport fee amount, when applicable."
+  - name: "cbd_congestion_fee"
+    type: "double"
+    description: "Central Business District congestion fee amount, when applicable."
+
+quality_metrics:
+  - name: "Row count"
+    definition: "Number of records written to the bronze data product for yellow taxi 2025-08."
+    current_value: 3574091
+    expected_threshold: ">= 3,500,000"
+    update_cadence: "Every pipeline run"
+  - name: "Completeness of key columns"
+    definition: "Percentage of rows where core analytical fields are non-null."
+    current_value: "100.0%"
+    expected_threshold: ">= 99%"
+    update_cadence: "Every pipeline run"
+  - name: "Validity of amount and distance values"
+    definition: "Percentage of rows where trip_distance, fare_amount, and total_amount are numeric and non-negative."
+    current_value: "92.69%"
+    expected_threshold: ">= 90%"
+    update_cadence: "Every pipeline run"
+  - name: "Validity of taxi zone IDs"
+    definition: "Percentage of rows where pickup and dropoff taxi zone IDs are in the expected TLC range."
+    current_value: "100.0%"
+    expected_threshold: ">= 99%"
+    update_cadence: "Every pipeline run"
+  - name: "Pickup month consistency"
+    definition: "Percentage of rows where tpep_pickup_datetime belongs to the published product month 2025-08."
+    current_value: "100.0%"
+    expected_threshold: ">= 99%"
+    update_cadence: "Every pipeline run"
+
+known_limitations:
+  - "This is a bronze product, so records are intentionally close to the raw TLC source and are not fully cleaned."
+  - "Only the yellow taxi 2025-08 partition is published for the current homework submission."
+  - "The product is stored locally under data/ and is ignored by Git because raw data files are large."
+  - "Negative fares or distances can exist in TLC source data because of corrections, voids, or unusual operational cases."
+  - "The queue is local Redpanda for coursework, not a managed production Kafka cluster."
+
+example_usage:
+  python: |
+    import duckdb
+
+    con = duckdb.connect()
+    result = con.execute("""
+        SELECT
+            COUNT(*) AS trips,
+            AVG(trip_distance) AS avg_trip_distance,
+            AVG(total_amount) AS avg_total_amount
+        FROM read_json_auto('data/streaming/bronze/yellow/2025-08/*.jsonl')
+    """).fetchdf()
+    print(result)
+  sql: |
+    SELECT
+        payment_type,
+        COUNT(*) AS trips,
+        AVG(total_amount) AS avg_total_amount
+    FROM read_json_auto('data/streaming/bronze/yellow/2025-08/*.jsonl')
+    GROUP BY payment_type
+    ORDER BY trips DESC;
+
+contacts:
+  owner: "Kuba"
+  repository: "Public GitHub repository: https://github.com/NotZetka/NYC-Taxi"
+  support_notes: "The repository is public. Clone it and follow the README instructions to reproduce and consume the data product."

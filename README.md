@@ -74,6 +74,22 @@ If you want to show the older batch part too:
 python scripts/run_pipeline.py --refresh
 ```
 
+## Data product deliverables
+
+The data product homework artifacts are included in:
+
+- Public repository: https://github.com/NotZetka/NYC-Taxi
+- `data_product_contract.yaml` - product contract with owner, purpose, sources, schema, access method, quality metrics, limitations, and example usage.
+- `docs/data_quality_metrics.yaml` - calculated data quality metrics for the current bronze product.
+- `scripts/calculate_data_quality.py` - script used to recalculate the quality metrics.
+- `docs/data_product_card.md` - content for the MS Teams Data Marketplace product card.
+
+Refresh the metrics after a successful streaming run:
+
+```bash
+python scripts/calculate_data_quality.py --write
+```
+
 ## Notes
 
 - Raw, Spark, and streaming outputs are ignored in git.
